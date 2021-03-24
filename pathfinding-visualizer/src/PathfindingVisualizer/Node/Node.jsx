@@ -6,6 +6,7 @@ export default class Node extends Component {
         render() {
         const {
             col,
+            isVisited,
             isFinish,
             isStart,
             isWall,
@@ -18,6 +19,8 @@ export default class Node extends Component {
             ? 'node-finish'
             : isStart
             ? 'node-start'
+            : isVisited
+            ? 'node-visited'
             : isWall
             ? 'node-wall'
             : '';
