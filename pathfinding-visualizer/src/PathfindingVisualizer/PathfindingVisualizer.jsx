@@ -76,12 +76,20 @@ export default class PathfindingVisualizer extends Component {
         this.animateDijkstra(visitedNodeInOrder, nodesInShortestPathOrder);
     }
 
+    resetGrid() {
+        const newgrid = getInitialGrid();
+        this.setState({grid: newgrid});
+    }
+
     render() {
         const {grid, mouseIsPressed} = this.state;
         console.log(grid);
 
         return (
             <>
+                <button onClick = {() => this.resetGrid()}>
+                    Reset Board
+                </button>
                 <button onClick = {() => this.visualizeDijkstra()}>
                     Visualize Dijkstra's Algorithm
                 </button>
