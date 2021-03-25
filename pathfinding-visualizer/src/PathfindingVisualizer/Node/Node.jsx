@@ -6,7 +6,7 @@ export default class Node extends Component {
         render() {
         const {
             col,
-            isVisited,
+            isVisited, 
             isFinish,
             isStart,
             isWall,
