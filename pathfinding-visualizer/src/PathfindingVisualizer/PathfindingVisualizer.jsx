@@ -4,6 +4,7 @@ import {dijkstra, getNodesInShortestPathOrder} from '../algorithms/dijkstra.js'
 
 import './PathfindingVisualizer.css'
 import { randomMaze } from '../mazeGenerators/randomMaze.js';
+import { verticalMaze } from '../mazeGenerators/verticalMaze';
 
 
 const initialNum = getInitialNum(window.innerWidth, window.innerHeight);
@@ -35,6 +36,7 @@ export default class PathfindingVisualizer extends Component {
             numRows : initialNum_rows,
             numColumns : initialNum_col,
             algoSpeed: 10,
+            mazeSpeed: 10,
         };
     }
 
@@ -122,14 +124,14 @@ export default class PathfindingVisualizer extends Component {
                         grid : newGrid,
                         mazeGeneratorState : false
                     });
-                }, 10);
+                }, i * this.state.mazeSpeed);
                 return;
             }
             let wall = walls[i];
             let node = this.state.grid[wall[0]][wall[1]];
             setTimeout(() => {
                 document.getElementById(`node-${node.row}-${node.col}`).className = "node node-wall"
-            }, i* 10);
+            }, i * this.state.mazeSpeed);
         }
     };
 
@@ -142,11 +144,27 @@ export default class PathfindingVisualizer extends Component {
         });
         setTimeout(() => {
             const {grid} = this.state;
-            const startNode = grid[startNodeRow][startNodeCol];
-            const finishNode = grid[finishNodeRow][finishNodeCol];
+            const startNode = grid[START_NODE_ROW][START_NODE_COL];
+            const finishNode = grid[FINISH_NODE_ROW][FINISH_NODE_COL];
             const walls = randomMaze(grid, startNode, finishNode);
             this.animateMaze(walls);
-        }, 10);
+        }, this.state.mazeSpeed);
+    }
+
+    generateVerticalMaze() {
+        if (this.state.visualizingAlgorithmState || this.state.mazeGeneratorState) {
+            return;
+        }
+        this.setState({
+            generatingMaze: true,
+        });
+        setTimeout(() => {
+            const { grid } = this.state;
+            const startNode = grid[START_NODE_ROW][START_NODE_COL];
+            const finishNode = grid[FINISH_NODE_ROW][FINISH_NODE_COL];
+            const walls = verticalMaze(grid, startNode, finishNode);
+            this.animateMaze(walls);            
+        }, this.state.mazeSpeed);
     }
 
     resetGrid() {
@@ -155,7 +173,7 @@ export default class PathfindingVisualizer extends Component {
         }
         for (let row = 0; row < this.state.grid.length; row++) {
             for (let col = 0; col < this.state.grid[0].length; col++) {
-                if (!((row === startNodeRow && col === startNodeCol) || (row === finishNodeRow && col === finishNodeCol))) {
+                if (!((row === START_NODE_ROW && col === START_NODE_COL) || (row === FINISH_NODE_ROW && col === FINISH_NODE_COL))) {
                     document.getElementById(`node-${row}-${col}`).className = "node";
                 }
             }
@@ -168,14 +186,33 @@ export default class PathfindingVisualizer extends Component {
         });
     }
 
+    clearPath() {
+        if (this.state.visualizingAlgorithm || this.state.generatingMaze) {
+            return;
+        }
+        for (let row = 0; row < this.state.grid.length; row++) {
+            for (let col = 0; col < this.state.grid[0].length; col++) {
+                if ( document.getElementById(`node-${row}-${col}`).className === "node node-shortest-path") {
+                    document.getElementById(`node-${row}-${col}`).className = "node";
+                }
+            }
+        }
+        const newGrid = getGridWithoutPath(this.state.grid);
+        this.setState({
+            grid: newGrid,
+            visualizingAlgorithm: false,
+            generatingMaze: false,
+        });
+      }
+
     render() {
         const {grid, mouseIsPressed} = this.state;
         console.log(grid);
 
         return (
             <>
-                <button onClick = {() => this.generateRandomMaze()}>
-                    RANDOM MAZE
+                <button onClick = {() => this.generateVerticalMaze()}>
+                    VERTICAL MAZE
                 </button>
                 <button onClick = {() => this.resetGrid()}>
                     Reset Board
@@ -349,6 +386,24 @@ const getNewGridWithMaze = (grid, walls) => {
             isWall: true,
         };
         newGrid[wall[0]][wall[1]] = newNode;
+    }
+    return newGrid;
+}
+
+const getGridWithoutPath = (grid) => {
+    let newGrid = grid.slice();
+    for (let row of grid) {
+        for (let node of row) {
+            let newNode = {
+                ...node,
+                distance: Infinity,
+                totalDistance: Infinity,
+                isVisited: false,
+                isShortest: false,
+                previousNode: null,
+            };
+            newGrid[node.row][node.col] = newNode;
+        }
     }
     return newGrid;
 }
