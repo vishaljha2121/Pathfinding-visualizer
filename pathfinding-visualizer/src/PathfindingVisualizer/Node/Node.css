@@ -22,6 +22,17 @@
   background-color: rgb(2, 36, 51);
 }
 
+.node-wall-animated {
+  /* width: var(--width);
+  height: var(--height); */
+  display: inline-block;
+  animation-name: wallAnimation;
+  animation-duration: 0.5s;
+  animation-timing-function: ease-out;
+  animation-direction: alternate;
+  animation-fill-mode: forwards;
+}
+
 .node-visited {
   animation-name: wallAnimation;
   animation-duration: 1.3s;
@@ -60,7 +71,7 @@
   }
   100% {
     transform: scale(1);
-    background-color: cornflowerblue;
+    background-color: darkblue;
   }
 }
 

@@ -48,13 +48,13 @@ export default class Node extends Component {
             } else if (width > 0) {
               cellHeight = Math.floor((height - 50) / numRows);
             } 
-        return <div 
+        return (<div 
                 id={`node-${row}-${col}`}
                 className = {`node ${extraClassName}`}
                 style = {{"--width": `${cellWidth}px`, "--height": `${cellHeight}px`}}
                 onMouseDown = {() => onMouseDown(row, col)}
                 onMouseEnter = {() => onMouseEnter(row, col)}
-                onMouseUp = {() => onMouseUp()}></div>;
+                onMouseUp = {() => onMouseUp()}></div>);
     }
 }
 

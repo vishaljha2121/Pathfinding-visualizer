@@ -11,11 +11,11 @@ const initialNum = getInitialNum(window.innerWidth, window.innerHeight);
 const initialNum_rows = initialNum[0]; 
 const initialNum_col = initialNum[1];
 
-const startFinishNode = getStartFinishNode(initialNum_rows, initialNum_col);
+/* const startFinishNode = getStartFinishNode(initialNum_rows, initialNum_col);
 const startNodeRow = startFinishNode[0];
 const startNodeCol = startFinishNode[1];
 const finishNodeRow = startFinishNode[2];
-const finishNodeCol = startFinishNode[3];
+const finishNodeCol = startFinishNode[3]; */
 
 const START_NODE_ROW = 10;
 const START_NODE_COL = 15;
@@ -35,7 +35,7 @@ export default class PathfindingVisualizer extends Component {
             mazeGeneratorState : false,
             numRows : initialNum_rows,
             numColumns : initialNum_col,
-            algoSpeed: 10,
+            algoSpeed: 3,
             mazeSpeed: 10,
         };
     }
@@ -68,33 +68,79 @@ export default class PathfindingVisualizer extends Component {
         this.setState({mouseIsPressed: false})
     }
 
-    animateDijkstra(visitedNodeInOrder, nodesInShortestPathOrder) {
-        for (let i = 0; i <= visitedNodeInOrder.length; i++) {
+    animateMaze = (walls) => {
+        for (let i = 0; i < walls.length; i++) {
+            if (i === walls.length) {
+                setTimeout(() => {
+                    this.resetGrid();
+                    let newGrid = getNewGridWithMaze(this.state.grid, walls);
+                    this.setState({
+                        grid : newGrid,
+                        mazeGeneratorState : false
+                    });
+                }, i * this.state.mazeSpeed);
+                return;
+            }
+            let wall = walls[i];
+            let node = this.state.grid[wall[0]][wall[1]];
+            setTimeout(() => {
+                document.getElementById(`node-${node.row}-${node.col}`).className = "node node-wall-animated"
+            }, i * this.state.mazeSpeed);
+        }
+    };
+
+    animateAlgorithm = (visitedNodeInOrder, nodesInShortestPathOrder) => {
+        let newGrid = this.state.grid.slice();
+        for (let row of newGrid) {
+            for (let node of row) {
+                let newNode = {
+                    ...node,
+                    isVisited: false,
+                };
+                newGrid[node.row][node.col] = newNode;
+            }
+        }
+        this.setState({grid : newGrid});
+        for (let i = 1; i <= visitedNodeInOrder.length; i++) {
+            let node = visitedNodeInOrder[i];
             if (i === visitedNodeInOrder.length) {
                 setTimeout(() => {
-                    this.animateShortestPath(nodesInShortestPathOrder);
-                }, 10 * i);
+                    this.animateShortestPath(nodesInShortestPathOrder,visitedNodeInOrder);
+                }, 1 * this.state.algoSpeed);
                 return;
             }
             setTimeout(() => {
-                const node = visitedNodeInOrder[i];
                 document.getElementById(`node-${node.row}-${node.col}`).className =
-                    `node node-visited`;
+                    "node node-visited";
                 //this.setState({grid: newGrid});
-            }, 10 * i);
+            }, 1 * this.state.algoSpeed);
         }
-    }
+    };
 
-    animateShortestPath(nodesInShortestPathOrder) {
-        for (let i = 0; i < nodesInShortestPathOrder.length; i++) {
+    animateShortestPath = (nodesInShortestPathOrder, visitedNodeInOrder) => {
+        if (nodesInShortestPathOrder.length === 1) {
+            this.setState({ visualizingAlgorithm : false});
+        }
+        for (let i = 1; i < nodesInShortestPathOrder.length; i++) {
+            if (i === nodesInShortestPathOrder.length - 1) {
+                setTimeout(() => {
+                    let newGrid = updateNodesForRender(
+                        this.state.grid,
+                        nodesInShortestPathOrder,
+                        visitedNodeInOrder
+                    );
+                    this.setState({grid : newGrid, visualizingAlgorithm: false});
+                }, i * (3 * this.state.algoSpeed));
+                return;
+            }
+            let node = nodesInShortestPathOrder[i];
             setTimeout(() => {
-                const node = nodesInShortestPathOrder[i];
                 document.getElementById(`node-${node.row}-${node.col}`).className =
                     `node node-shortest-path`;
                 //this.setState({grid: newGrid});
-            }, 50 * i);
+            }, i * (3 * this.state.algoSpeed));
         }
-    }
+    };
 
     visualizeDijkstra() {
         if (this.state.visualizingAlgorithmState || this.state.mazeGeneratorState) {
@@ -110,30 +156,11 @@ export default class PathfindingVisualizer extends Component {
             const visitedNodeInOrder = dijkstra(grid, startNode, finishNode);
             const nodesInShortestPathOrder = getNodesInShortestPathOrder(finishNode);
             //const nodesInShortestPathOrder = getNodesInShortestPathOrder(finishNode);
-            this.animateDijkstra(visitedNodeInOrder, nodesInShortestPathOrder);
-        }, 10);
+            this.animateAlgorithm(visitedNodeInOrder, nodesInShortestPathOrder);
+        }, this.state.algoSpeed);
     }
 
-    animateMaze(walls) {
-        for (let i = 0; i <= walls.length; i++) {
-            if (i === walls.length) {
-                setTimeout(() => {
-                    this.resetGrid();
-                    let newGrid = getNewGridWithMaze(this.state.grid, walls);
-                    this.setState({
-                        grid : newGrid,
-                        mazeGeneratorState : false
-                    });
-                }, i * this.state.mazeSpeed);
-                return;
-            }
-            let wall = walls[i];
-            let node = this.state.grid[wall[0]][wall[1]];
-            setTimeout(() => {
-                document.getElementById(`node-${node.row}-${node.col}`).className = "node node-wall"
-            }, i * this.state.mazeSpeed);
-        }
-    };
+    
 
     generateRandomMaze() {
         if (this.state.visualizingAlgorithmState || this.state.mazeGeneratorState) {
@@ -407,3 +434,34 @@ const getGridWithoutPath = (grid) => {
     }
     return newGrid;
 }
+
+const updateNodesForRender = (
+    grid,
+    nodesInShortestPathOrder,
+    visitedNodesInOrder
+  ) => {
+    let newGrid = grid.slice();
+    for (let node of visitedNodesInOrder) {
+    if (
+        (node.row === START_NODE_ROW && node.col === START_NODE_COL) ||
+        (node.row === FINISH_NODE_ROW && node.col === FINISH_NODE_COL)
+    )
+        continue;
+    let newNode = {
+        ...node,
+        isVisited: true,
+    };
+    newGrid[node.row][node.col] = newNode;
+    }
+    for (let node of nodesInShortestPathOrder) {
+    if (node.row === FINISH_NODE_ROW && node.col === FINISH_NODE_COL) {
+        return newGrid;
+    }
+    let newNode = {
+        ...node,
+        isVisited: false,
+        isShortest: true,
+    };
+    newGrid[node.row][node.col] = newNode;
+    }
+  };
